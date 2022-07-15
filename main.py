@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 import tcod
 
-from actions import EscapeAction, MovementAction
+from engine import Engine
 from input_handlers import EventHandler
+from entity import Entity
 
 def main() -> None:
 
   width = 80
   height = 50
-
-  playerX = int(width / 2)
-  playerY = int(height / 2)
 
   #Define the font and Size  
   tileset = tcod.tileset.load_tilesheet(
@@ -18,6 +16,12 @@ def main() -> None:
   )
 
   event_handler = EventHandler()
+  
+  player = Entity(int(width/2), int(height / 2), '@', (190, 12, 35))
+  npc = Entity(int(width/2 - 5), int(height / 2), '@', (255, 255, 0))
+  entities = {npc, player}
+
+  engine = Engine(entities=entities, event_handler=event_handler, player=player)
 
   #Create my window and define h, w, vsync, etc. 
   with tcod.context.new_terminal(
@@ -31,24 +35,11 @@ def main() -> None:
     #Loop game
     while True:
       #Where the @ start
-      root.print(x=playerX, y=playerY, string="@")
+      engine.render(console=root, context=context)
       #Print the screen and update
-      context.present(root)
+      events = tcod.event.wait()
 
-      root.clear()
-
-      #Capture User input
-      for event in tcod.event.wait():
-        action = event_handler.dispatch(event)
-        if action is None:
-          continue
-        #Movement
-        if isinstance(action, MovementAction):
-          playerX += action.dx
-          playerY += action.dy
-        #Quit
-        elif isinstance(action, EscapeAction):
-          raise SystemExit()
+      engine.handle_events(events)
 
 if __name__ == "__main__":
   main()
